@@ -111,9 +111,12 @@ function renderizarTarjetas(listaDeLotes) {
         const badgeClass = esDisponible ? 'badge-disponible' : 'badge-reservado';
         const textoEstado = esDisponible ? 'Disponible' : 'Reservado';
         
-        // Dimensión y Área configurables desde Supabase con respaldo por defecto
-        const dimensionReal = lote.dimension || "6x12 Metros";
-        const areaReal = lote.area || "72 m²";
+        // --- DETECCIÓN INTELIGENTE DE MAYÚSCULAS/MINÚSCULAS ---
+        // Busca en "dimension" o "Dimension" o "Dimensión". Si no hay nada, usa "6x12 Metros"
+        const dimensionReal = lote.dimension || lote.Dimension || lote.Dimensión || "6x12 Metros";
+        
+        // Busca en "area" o "Area" o "Área". Si no hay nada, usa "72 m²"
+        const areaReal = lote.area || lote.Area || lote.Área || "72 m²";
         
         // Obtenemos el precio desde la columna "Precio" (con P mayúscula)
         const valorPrecio = Number(lote.Precio || lote.precio || 0);
@@ -161,7 +164,7 @@ function renderizarTarjetas(listaDeLotes) {
                         </div>
                     </div>
 
-                    <!-- SECCIÓN DE DIMENSIÓN Y ÁREA DINÁMICAS DESDE SUPABASE -->
+                    <!-- SECCIÓN DE DIMENSIÓN Y ÁREA DINÁMICAS -->
                     <div class="flex gap-4 py-3 my-3 border-y border-gray-100 text-xs text-gray-500 font-medium">
                         <div><span class="text-gray-400">Dimensión:</span> ${dimensionReal}</div>
                         <div><span class="text-gray-400">Área:</span> ${areaReal}</div>
