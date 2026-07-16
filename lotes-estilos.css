@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap');
+
+body {
+    background-color: #ffffff;
+    color: #111111;
+}
+
+.font-serif { font-family: 'Playfair Display', serif; }
+.font-sans { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+/* Tarjetas Estilo Boutique / Inmobiliaria de Lujo */
+.lote-card {
+    background: #FFFFFF;
+    border: 1px solid #EAEAEA;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lote-card:hover {
+    border-color: #111111;
+    transform: translateY(-2px);
+}
+
+/* Etiquetas Bonitas de Estado */
+.badge-disponible {
+    background-color: #111111;
+    color: #FFFFFF;
+}
+
+.badge-reservado {
+    background-color: #F5F5F5;
+    color: #999999;
+    text-decoration: line-through;
+}
+
+/* Botón Minimalista Negro */
+.btn-action {
+    background-color: #111111;
+    color: #FFFFFF;
+    border: 1px solid #111111;
+    transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+    background-color: #FFFFFF;
+    color: #000000;
+}
