@@ -22,8 +22,7 @@ async function inicializarCatatogo() {
     try {
         const { data, error } = await supabaseClient
             .from('terrenos')
-            .select('*')
-            .order('numero_lote', { ascending: true });
+            .select('*'); // Traemos todos los campos tal y como están en tu tabla
 
         if (error) throw error;
 
@@ -44,7 +43,7 @@ async function inicializarCatatogo() {
 }
 
 function construirFiltroSectores(lotes) {
-    const sectoresUnicos = [...new Set(lotes.map(l => l.ubicacion_sector).filter(Boolean))];
+    const sectoresUnicos = [...new Set(lotes.map(l => l.ubicacion_sector || l.ubicacion).filter(Boolean))];
     sectoresUnicos.forEach(sector => {
         const option = document.createElement('option');
         option.value = sector;
@@ -61,10 +60,23 @@ function escucharFiltros() {
         const valEstado = filtroEstado.value;
 
         const resultadoFiltrado = todosLosLotes.filter(lote => {
-            const coincideNumero = lote.numero_lote.toString().toLowerCase().includes(valNumero);
-            const coincideSector = valSector === 'todos' || lote.ubicacion_sector === valSector;
+            // Mapeo seguro para leer "numero del lote" con espacios
+            const numLote = lote["numero del lote"] || lote.numero_lote || "";
+            const coincideNumero = numLote.toString().toLowerCase().includes(valNumero);
+            
+            const sectorLote = lote.ubicacion_sector || lote.ubicacion || 'Sector General';
+            const coincideSector = valSector === 'todos' || sectorLote === valSector;
+            
             const coincidePrecio = valPrecio === 'todos' || Number(lote.precio) <= Number(valPrecio);
-            const coincideEstado = valEstado === 'todos' || lote.estado === valEstado;
+            
+            // Adaptamos para que reconozca tanto "nuevo" / "Disponible" como estados válidos
+            const estadoNormalizado = (lote.estado || '').toLowerCase();
+            let coincideEstado = true;
+            if (valEstado === 'Disponible') {
+                coincideEstado = estadoNormalizado === 'disponible' || estadoNormalizado === 'nuevo';
+            } else if (valEstado === 'Reservado') {
+                coincideEstado = estadoNormalizado === 'reservado';
+            }
 
             return coincideNumero && coincideSector && coincidePrecio && coincideEstado;
         });
@@ -90,20 +102,28 @@ function renderizarTarjetas(listaDeLotes) {
     }
 
     listaDeLotes.forEach(lote => {
-        const esDisponible = lote.estado === 'Disponible';
+        // Obtenemos el número usando el nombre real de tu columna con espacios
+        const numeroLoteReal = lote["numero del lote"] || lote.numero_lote || "Sin Número";
+        
+        // Normalizamos el estado "nuevo" o "Disponible" para el diseño visual
+        const estadoActual = lote.estado || 'Disponible';
+        const esDisponible = estadoActual.toLowerCase() === 'disponible' || estadoActual.toLowerCase() === 'nuevo';
         const badgeClass = esDisponible ? 'badge-disponible' : 'badge-reservado';
+        const textoEstado = esDisponible ? 'Disponible' : 'Reservado';
         
         const precioFormateado = new Intl.NumberFormat('es-CO', {
             style: 'currency',
             currency: 'COP',
             minimumFractionDigits: 0
-        }).format(lote.precio);
+        }).format(lote.precio || 0);
+
+        const sectorLote = lote.ubicacion_sector || lote.ubicacion || 'Sector General';
 
         // --- CONSTRUCCIÓN DEL MENSAJE INTELIGENTE DE WHATSAPP ---
         const textoWhatsapp = `Hola MCD Terrenos, estoy interesado en el siguiente lote:\n\n` +
-                              `• Lote Número: ${lote.numero_lote}\n` +
+                              `• Lote Número: ${numeroLoteReal}\n` +
                               `• Medida: 6x12 Metros (72m²)\n` +
-                              `• Sector/Etapa: ${lote.ubicacion_sector || 'No especificado'}\n` +
+                              `• Sector/Etapa: ${sectorLote}\n` +
                               `• Precio de lista: ${precioFormateado}\n\n` +
                               `¿Me podrían dar más detalles sobre la disponibilidad actual y los métodos de pago?`;
 
@@ -116,7 +136,7 @@ function renderizarTarjetas(listaDeLotes) {
                          alt="Terreno" 
                          class="w-full h-full object-cover">
                     <span class="absolute top-4 left-4 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded shadow-sm ${badgeClass}">
-                        ${lote.estado}
+                        ${textoEstado}
                     </span>
                 </div>
 
@@ -124,9 +144,9 @@ function renderizarTarjetas(listaDeLotes) {
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <span class="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-0.5">
-                                ${lote.ubicacion_sector || 'Sector General'}
+                                ${sectorLote}
                             </span>
-                            <h3 class="text-base font-bold text-[#111111]">Lote Número ${lote.numero_lote}</h3>
+                            <h3 class="text-base font-bold text-[#111111]">Lote Número ${numeroLoteReal}</h3>
                         </div>
                         <div class="text-right">
                             <span class="text-xs text-gray-400 block">Precio Total</span>
