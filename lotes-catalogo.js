@@ -2,7 +2,8 @@
 const SUPABASE_URL = "https://eqpgpeubuhndyuybreca.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_Emty_z6kOItvo_DKUC7OzA_tNbFShWe";
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Se corrige el conflicto de variable renombrando la constante a 'supabaseClient'
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Tu número de contacto de WhatsApp para el proyecto
 const TELEFONO_WHATSAPP = "573219420775"; 
@@ -19,7 +20,7 @@ let todosLosLotes = [];
 
 async function inicializarCatatogo() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('terrenos')
             .select('*')
             .order('numero_lote', { ascending: true });
@@ -99,7 +100,6 @@ function renderizarTarjetas(listaDeLotes) {
         }).format(lote.precio);
 
         // --- CONSTRUCCIÓN DEL MENSAJE INTELIGENTE DE WHATSAPP ---
-        // Explicamos de forma clara qué lote es, su ubicación y precio para que te llegue estructurado
         const textoWhatsapp = `Hola MCD Terrenos, estoy interesado en el siguiente lote:\n\n` +
                               `• Lote Número: ${lote.numero_lote}\n` +
                               `• Medida: 6x12 Metros (72m²)\n` +
@@ -107,7 +107,6 @@ function renderizarTarjetas(listaDeLotes) {
                               `• Precio de lista: ${precioFormateado}\n\n` +
                               `¿Me podrían dar más detalles sobre la disponibilidad actual y los métodos de pago?`;
 
-        // Codificamos el texto para que sea compatible con enlaces URL seguros (reemplaza espacios por %20, etc.)
         const urlWhatsapp = `https://wa.me/${TELEFONO_WHATSAPP}?text=${encodeURIComponent(textoWhatsapp)}`;
 
         const cardHTML = `
