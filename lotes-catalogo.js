@@ -2,7 +2,7 @@
 const SUPABASE_URL = "https://eqpgpeubuhndyuybreca.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_Emty_z6kOItvo_DKUC7OzA_tNbFShWe";
 
-// Se corrige el conflicto de variable renombrando la constante a 'supabaseClient'
+// Conexión segura usando un cliente con nombre único
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Tu número de contacto de WhatsApp para el proyecto
@@ -22,11 +22,11 @@ async function inicializarCatatogo() {
     try {
         const { data, error } = await supabaseClient
             .from('terrenos')
-            .select('*'); // Traemos todos los campos tal y como están en tu tabla
+            .select('*');
 
         if (error) throw error;
 
-        todosLosLotes = data;
+        todosLosLotes = data || [];
         
         loadingStatus.classList.add('hidden');
         gridLotes.classList.remove('hidden');
@@ -43,7 +43,7 @@ async function inicializarCatatogo() {
 }
 
 function construirFiltroSectores(lotes) {
-    const sectoresUnicos = [...new Set(lotes.map(l => l.ubicacion_sector || l.ubicacion).filter(Boolean))];
+    const sectoresUnicos = [...new Set(lotes.map(l => l.ubicacion_sector).filter(Boolean))];
     sectoresUnicos.forEach(sector => {
         const option = document.createElement('option');
         option.value = sector;
@@ -60,16 +60,18 @@ function escucharFiltros() {
         const valEstado = filtroEstado.value;
 
         const resultadoFiltrado = todosLosLotes.filter(lote => {
-            // Mapeo seguro para leer "numero del lote" con espacios
-            const numLote = lote["numero del lote"] || lote.numero_lote || "";
-            const coincideNumero = numLote.toString().toLowerCase().includes(valNumero);
+            // Mapeo seguro de columnas evitando errores de mayúsculas/minúsculas
+            const numLote = (lote["numero del lote"] || lote.numero_lote || "").toString();
+            const coincideNumero = numLote.toLowerCase().includes(valNumero);
             
-            const sectorLote = lote.ubicacion_sector || lote.ubicacion || 'Sector General';
+            const sectorLote = lote.ubicacion_sector || 'Sector General';
             const coincideSector = valSector === 'todos' || sectorLote === valSector;
             
-            const coincidePrecio = valPrecio === 'todos' || Number(lote.precio) <= Number(valPrecio);
+            // Leemos "Precio" con P mayúscula tal como está en tu Supabase
+            const precioLote = Number(lote.Precio || lote.precio || 0);
+            const coincidePrecio = valPrecio === 'todos' || precioLote <= Number(valPrecio);
             
-            // Adaptamos para que reconozca tanto "nuevo" / "Disponible" como estados válidos
+            // Adaptamos para que reconozca los estados de tu base de datos
             const estadoNormalizado = (lote.estado || '').toLowerCase();
             let coincideEstado = true;
             if (valEstado === 'Disponible') {
@@ -102,22 +104,22 @@ function renderizarTarjetas(listaDeLotes) {
     }
 
     listaDeLotes.forEach(lote => {
-        // Obtenemos el número usando el nombre real de tu columna con espacios
+        // Datos extraídos de forma 100% compatible con tus columnas reales de la foto:
         const numeroLoteReal = lote["numero del lote"] || lote.numero_lote || "Sin Número";
-        
-        // Normalizamos el estado "nuevo" o "Disponible" para el diseño visual
         const estadoActual = lote.estado || 'Disponible';
         const esDisponible = estadoActual.toLowerCase() === 'disponible' || estadoActual.toLowerCase() === 'nuevo';
         const badgeClass = esDisponible ? 'badge-disponible' : 'badge-reservado';
         const textoEstado = esDisponible ? 'Disponible' : 'Reservado';
         
+        // Obtenemos el precio desde la columna "Precio" (con P mayúscula)
+        const valorPrecio = Number(lote.Precio || lote.precio || 0);
         const precioFormateado = new Intl.NumberFormat('es-CO', {
             style: 'currency',
             currency: 'COP',
             minimumFractionDigits: 0
-        }).format(lote.precio || 0);
+        }).format(valorPrecio);
 
-        const sectorLote = lote.ubicacion_sector || lote.ubicacion || 'Sector General';
+        const sectorLote = lote.ubicacion_sector || 'Sector General';
 
         // --- CONSTRUCCIÓN DEL MENSAJE INTELIGENTE DE WHATSAPP ---
         const textoWhatsapp = `Hola MCD Terrenos, estoy interesado en el siguiente lote:\n\n` +
@@ -134,7 +136,8 @@ function renderizarTarjetas(listaDeLotes) {
                 <div class="relative h-60 w-full bg-gray-50 border-b border-gray-100">
                     <img src="${lote.foto_url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600'}" 
                          alt="Terreno" 
-                         class="w-full h-full object-cover">
+                         class="w-full h-full object-cover"
+                         onerror="this.src='https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600'">
                     <span class="absolute top-4 left-4 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded shadow-sm ${badgeClass}">
                         ${textoEstado}
                     </span>
