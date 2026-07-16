@@ -104,12 +104,16 @@ function renderizarTarjetas(listaDeLotes) {
     }
 
     listaDeLotes.forEach(lote => {
-        // Datos extraídos de forma 100% compatible con tus columnas reales de la foto:
+        // Datos extraídos de tu Supabase
         const numeroLoteReal = lote["numero del lote"] || lote.numero_lote || "Sin Número";
         const estadoActual = lote.estado || 'Disponible';
         const esDisponible = estadoActual.toLowerCase() === 'disponible' || estadoActual.toLowerCase() === 'nuevo';
         const badgeClass = esDisponible ? 'badge-disponible' : 'badge-reservado';
         const textoEstado = esDisponible ? 'Disponible' : 'Reservado';
+        
+        // Dimensión y Área configurables desde Supabase con respaldo por defecto
+        const dimensionReal = lote.dimension || "6x12 Metros";
+        const areaReal = lote.area || "72 m²";
         
         // Obtenemos el precio desde la columna "Precio" (con P mayúscula)
         const valorPrecio = Number(lote.Precio || lote.precio || 0);
@@ -124,7 +128,7 @@ function renderizarTarjetas(listaDeLotes) {
         // --- CONSTRUCCIÓN DEL MENSAJE INTELIGENTE DE WHATSAPP ---
         const textoWhatsapp = `Hola MCD Terrenos, estoy interesado en el siguiente lote:\n\n` +
                               `• Lote Número: ${numeroLoteReal}\n` +
-                              `• Medida: 6x12 Metros (72m²)\n` +
+                              `• Medida: ${dimensionReal} (${areaReal})\n` +
                               `• Sector/Etapa: ${sectorLote}\n` +
                               `• Precio de lista: ${precioFormateado}\n\n` +
                               `¿Me podrían dar más detalles sobre la disponibilidad actual y los métodos de pago?`;
@@ -157,9 +161,10 @@ function renderizarTarjetas(listaDeLotes) {
                         </div>
                     </div>
 
+                    <!-- SECCIÓN DE DIMENSIÓN Y ÁREA DINÁMICAS DESDE SUPABASE -->
                     <div class="flex gap-4 py-3 my-3 border-y border-gray-100 text-xs text-gray-500 font-medium">
-                        <div><span class="text-gray-400">Dimensión:</span> 6x12 Metros</div>
-                        <div><span class="text-gray-400">Área:</span> 72 m²</div>
+                        <div><span class="text-gray-400">Dimensión:</span> ${dimensionReal}</div>
+                        <div><span class="text-gray-400">Área:</span> ${areaReal}</div>
                     </div>
 
                     <p class="text-xs text-gray-400 font-light leading-relaxed mb-6 line-clamp-2">
